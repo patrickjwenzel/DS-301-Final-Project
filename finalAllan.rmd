@@ -1,0 +1,61 @@
+---
+title: "Final"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+```{r cars}
+data = read.csv('C:/Users/allan/OneDrive/Documents/DS 301/DS-301-Final-Project/police_killings.csv', header=TRUE)
+summary(data)
+data$gender = as.character(data$gender)
+data$cause = as.character(data$cause)
+data$armed = as.character(data$armed)
+data$raceethnicity = as.character(data$raceethnicity)
+data$age = as.numeric(data$age)
+ check = lm(gender~raceethnicity+age+cause + armed, data= data)
+ summary(check)
+library(leaps)
+library(dplyr)
+data$gender = as.factor(data$gender)
+data$cause = as.factor(data$cause)
+data$armed = as.factor(data$armed)
+data$raceethnicity = as.factor(data$raceethnicity)
+data$age = as.numeric(data$age)
+
+M2 = regsubsets(gender~raceethnicity+age+cause + armed, data= data, nbest=1,nvmax=7)
+
+n = dim(data)[1]
+p = rowSums(summary(M2)$which)
+adjr20 = summary(M2)$adjr2
+cp0 = summary(M2)$cp
+rss0 = summary(M2)$rss
+AIC0 = n*log(rss0/n) + 2
+BIC0 = n*log(rss0/n) + log(n)
+cbind(p,rss0,adjr20,cp0,AIC0,BIC0)
+which.min(BIC0)
+which.min(AIC0)
+which.min(cp0)
+which.max(adjr20)
+coef(M2,6)
+coef(M2,7) 
+str(M2)
+ 
+ 
+firearm = data[data$armed == 'firearm',]
+knife = data[data$armed == 'knife',]
+unarmed = data[data$armed == 'No', ]
+ 
+
+
+
+```
+gender = data %>% 
+  filter_all(all_vars(!is.infinite(.))) %>% 
+  filter_all(all_vars(!is.nan(.)))%>% 
+  filter_all(all_vars(!is.na(.)))
+ 
