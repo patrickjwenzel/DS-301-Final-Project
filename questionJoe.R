@@ -8,16 +8,19 @@
 #install.packages('tree')
 library(tree)
 
-data2015 <- read.csv("/Users/joestrobel/Documents/school/ds301/DS-301-Final-Project/thecounted-data/the-counted-2015.csv", header = TRUE)
-data2016 <- read.csv("/Users/joestrobel/Documents/school/ds301/DS-301-Final-Project/thecounted-data/the-counted-2016.csv")
+Police <- read.csv("/Users/joestrobel/Desktop/DS-301-Final-Project/police_killings.csv")
+Police$white = as.numeric(Police$raceethnicity == "White")
 
-Police <- rbind(data2015, data2016)
-
-names(Police)
+str(Police)
+Police$raceethnicity <- as.factor(Police$raceethnicity)
+Police$gender <- as.factor(Police$gender)
+Police$armed <- as.factor(Police$armed)
+Police$age <- as.numeric(Police$age, na.rm = TRUE)
+str(Police)
 
 train = sample(1:nrow(Police),nrow(Police)/2)
 
-tree.Police = tree(raceethnicity~age+gender+state+classification+armed,data=Police, subset=train)
+tree.Police = tree(raceethnicity~age+gender+latitude+armed+h_income+college,data=Police, subset=train)
 
 tree.Police
 summary(tree.Police) # only 5 predictors used in tree construction
@@ -30,7 +33,7 @@ text(tree.Police,pretty=0)
 test =  Police[-train,]
 tree.pred = predict(tree.Police, newdata=test)
 
-Y.test = Police[-train,"medv"]
+Y.test = Police[-train,"raceethnicity"]
 mean((tree.pred - Y.test)^2)
 
 ## pruning ##
@@ -56,3 +59,4 @@ text(prune.Police,pretty=0)
 
 tree.prune = predict(prune.Police,newdata=test)
 mean((tree.prune - Y.test)^2)
+
