@@ -27,22 +27,12 @@ library(RColorBrewer)
 ```
 
 ```{r, echo = T}
-counted2015 <- read.csv("./thecounted-data/the-counted-2015.csv", header = TRUE)
-counted2016 <- read.csv("./thecounted-data/the-counted-2016.csv", header = TRUE)
-df <- rbind(counted2015, counted2016)
+df <- read.csv("./thecounted-data/police_killings.csv", header = TRUE)
 ```
 
 ```{r}
-head(counted2015, 5)
-head(counted2016, 5)
-str(counted2015)
-str(counted2016)
-dim(counted2015)
-dim(counted2016)
-
 df$raceethnicity <- as.factor(df$raceethnicity)
 df$state <- as.factor(df$state)
-df$classification <- as.factor(df$classification)
 df$armed <- as.factor(df$armed)
 df$date <- as.Date(paste(match(df$month, month.name), "/", df$day, "/", df$year, sep=""), format = "%m/%d/%Y")
 
@@ -72,9 +62,10 @@ ggplot(armedGroup, aes(x = armed, y = numPeople, color = armed, fill = armed)) +
 ```
 
 ```{r, echo = T}
-classGroup <- df %>% group_by(classification) %>%
+classGroup <- df %>% group_by(cause) %>%
                       summarise(numPeople = n())
 classGroup
+ggplot(classGroup, aes(x = cause, y = numPeople, color = cause, fill = cause)) + geom_bar(stat="identity") + ggtitle("Number of People per Cause of Death") + xlab("Cause of Death") + ylab("Number of People") + theme(axis.text.x = element_text(angle = 90))
 ```
 
 ```{r, echo = T}
@@ -98,7 +89,7 @@ ggplot(stateGroup, aes(x = long, y = lat, group = group)) +
   geom_path() + 
   scale_fill_gradientn(colours=colorRampPalette(brewer.pal(11, "Reds"))(100), na.value="grey90") + 
   coord_map() + 
-  ggtitle('Predicted Voted Political Party by State') + xlab('') + ylab('') + labs(fill = 'Predicted State Winner') + 
+  ggtitle('Number of People killed by State') + xlab('') + ylab('') + labs(fill = 'Number of People Killed') + 
   theme(axis.ticks.x = element_blank(),
         axis.text.x = element_blank(),
         axis.ticks.y = element_blank(),
@@ -116,7 +107,7 @@ ggplot(stateGroup2, aes(x = long, y = lat, group = group)) +
   geom_path() + 
   scale_fill_gradientn(colours=colorRampPalette(brewer.pal(9, "Reds"))(100), na.value="grey90") + 
   coord_map() + 
-  ggtitle('Predicted Voted Political Party by State') + xlab('') + ylab('') + labs(fill = 'Predicted State Winner') + 
+  ggtitle('Number of People killed by State') + xlab('') + ylab('') + labs(fill = 'Number of People Killed') + 
   theme(axis.ticks.x = element_blank(),
         axis.text.x = element_blank(),
         axis.ticks.y = element_blank(),
