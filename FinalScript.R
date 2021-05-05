@@ -3,7 +3,112 @@
 ## Can you predict the race of the person killed by
 ## the police based on several of the given predictors?
 ## 
-## Authors: Adam Ford, Joseph Strobel
+## Authors: Adam Ford, Joseph Strobel, Patrick Wenzel
+
+## EDA
+knitr::opts_chunk$set(echo = FALSE)
+options(dplyr.summarise.inform = FALSE)
+options(dplyr.tibble.inform = FALSE)
+options(scipen = 6)
+library(tidyr)
+library(dplyr)
+library(ISLR)
+library(kableExtra)
+library(car)
+library(leaps)
+library(caret)
+library(glmnet)
+library(ROCR)
+library(datasets)
+library(tree)
+library(class)
+library(MASS)
+library(RColorBrewer)
+
+
+
+df <- read.csv("./thecounted-data/police_killings.csv", header = TRUE)
+
+
+
+df$raceethnicity <- as.factor(df$raceethnicity)
+df$state <- as.factor(df$state)
+df$armed <- as.factor(df$armed)
+df$date <- as.Date(paste(match(df$month, month.name), "/", df$day, "/", df$year, sep=""), format = "%m/%d/%Y")
+str(df)
+
+
+
+reGroup <- df %>% group_by(raceethnicity) %>%
+  summarise(num_people = n())
+ggplot(reGroup, aes(x = raceethnicity, y = num_people, color = raceethnicity, fill = raceethnicity)) + geom_bar(stat="identity") + ggtitle("Number of People Killed per Race/Ethnicity") + xlab("Race/Ethnicity") + ylab("Number of People") + theme(axis.text.x = element_text(angle = 90))
+
+
+
+byMonth <- df %>% group_by(month) %>%
+  summarise(numDeaths = n())
+byMonth <- byMonth[order(match(byMonth$month, month.name)), ]
+byMonth$month <- factor(byMonth$month, levels = month.name)
+ggplot(byMonth, aes(x = month, y = numDeaths, group = 1)) + geom_line() + theme(axis.text.x = element_text(angle = 90))
+
+
+
+armedGroup <- df %>% group_by(armed) %>%
+  summarise(numPeople = n())
+ggplot(armedGroup, aes(x = armed, y = numPeople, color = armed, fill = armed)) + geom_bar(stat="identity") + ggtitle("Number of People Killed per Armed Classification") + xlab("Armed Classification") + ylab("Number of People") + theme(axis.text.x = element_text(angle = 90))
+
+
+
+classGroup <- df %>% group_by(cause) %>%
+  summarise(numPeople = n())
+classGroup
+ggplot(classGroup, aes(x = cause, y = numPeople, color = cause, fill = cause)) + geom_bar(stat="identity") + ggtitle("Number of People per Cause of Death") + xlab("Cause of Death") + ylab("Number of People") + theme(axis.text.x = element_text(angle = 90))
+
+
+
+ageGroup <- df[df$age != "Unknown",]
+ageGroup$age[which(ageGroup$age == "40s")] <- "40"
+ageGroup$age <- strtoi(ageGroup$age)
+ggplot() + geom_histogram(data = ageGroup, aes(x=age), color = "black", fill = "blue", binwidth = 5)
+
+
+
+df$state[which(df$state == "DC")] <- "VA"
+df$State <- tolower(state.name[match(df$state, state.abb)])
+df2 <- df
+states <- map_data('state')
+stateGroup <- df %>% group_by(State) %>%
+  summarise(numPeople = n())
+stateGroup <- full_join(states, stateGroup, by = c('region' = 'State'))
+ggplot(stateGroup, aes(x = long, y = lat, group = group)) + 
+  geom_polygon(aes(fill=numPeople)) + 
+  geom_path() + 
+  scale_fill_gradientn(colours=colorRampPalette(brewer.pal(11, "Reds"))(100), na.value="grey90") + 
+  coord_map() + 
+  ggtitle('Number of People killed by State') + xlab('') + ylab('') + labs(fill = 'Number of People Killed') + 
+  theme(axis.ticks.x = element_blank(),
+        axis.text.x = element_blank(),
+        axis.ticks.y = element_blank(),
+        axis.text.y = element_blank())             
+
+
+
+stateGroup2 <- df2 %>% group_by(State) %>%
+  summarise(numPeople = n())
+stateGroup2$numPeople[stateGroup2$State %in% c("california", "texas", "florida")] <- 0
+stateGroup2 <- full_join(states, stateGroup2, by = c('region' = 'State'))
+ggplot(stateGroup2, aes(x = long, y = lat, group = group)) + 
+  geom_polygon(aes(fill=numPeople)) + 
+  geom_path() + 
+  scale_fill_gradientn(colours=colorRampPalette(brewer.pal(9, "Reds"))(100), na.value="grey90") + 
+  coord_map() + 
+  ggtitle('Number of People killed by State') + xlab('') + ylab('') + labs(fill = 'Number of People Killed') + 
+  theme(axis.ticks.x = element_blank(),
+        axis.text.x = element_blank(),
+        axis.ticks.y = element_blank(),
+        axis.text.y = element_blank()) 
+
+
 
 ## Attempt 1
 police = read.csv("~/Classwork/D S 301/DS-301-Final-Project/police_killings.csv", header=TRUE)
