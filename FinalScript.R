@@ -3,7 +3,7 @@
 ## Can you predict the race of the person killed by
 ## the police based on several of the given predictors?
 ## 
-## Authors: Adam Ford, Joseph Strobel, Patrick Wenzel
+## Authors: Adam Ford, Joseph Strobel, Patrick Wenzel, Carter Wunsch, Allan Juarez
 
 ## EDA
 knitr::opts_chunk$set(echo = FALSE)
