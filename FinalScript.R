@@ -149,3 +149,108 @@ qda.pred = predict(qda.fit,test)
 
 mean(qda.pred$class==test$white)
 table(qda.pred$class,test$white)
+
+
+## Question 2: 
+##
+## Can you predict if the victim was armed
+## at the time of their death?
+## 
+## Authors: Allan Juarez, Carter Wunsch
+
+
+# Cleaned data
+
+set.seed(21)
+killings = read.csv("C:\\Users\\Carter\\Documents\\ISU S2021\\DS 301\\final_project\\DS-301-Final-Project\\police_killings.csv")
+sum(is.na(killings))
+dim(killings)
+
+killings = na.omit(killings)
+
+sum(is.na(killings))
+dim(killings)
+
+killings$age = as.numeric(killings$age)
+killings$pov = as.numeric(killings$pov)
+killings$share_white = as.numeric(killings$share_white)
+killings$share_black = as.numeric(killings$share_black)
+killings$share_hispanic = as.numeric(killings$share_hispanic)
+killings$p_income = as.numeric(killings$p_income)
+killings$gender = as.numeric(killings$gender == "Male")
+killings$armed = as.numeric(killings$armed != "No")
+
+# Logistic regression with variables of interest
+
+train = sample(1:nrow(killings),nrow(killings)/2, replace=FALSE)
+test = (-train)
+
+glm.fit = glm(armed~age+raceethnicity+comp_income+urate+cause+gender+college+pov, data=killings,subset=train,family='binomial')
+glm.prob = predict(glm.fit,killings[test,],type='response') 
+head(glm.prob)
+glm.pred = rep(0,length(test))
+glm.pred[glm.prob > .5] =1 
+table(glm.pred,killings[test,]$armed)
+1-mean(glm.pred == killings[test,]$armed)
+
+# Trained lda model based on variables of interest
+
+library(MASS)
+lda.fit = lda(armed~age+raceethnicity+comp_income+urate+cause+gender+college+pov,data=killings, subset=train)
+lda.pred = predict(lda.fit,killings[test,])
+table(lda.pred$class,killings[test,]$armed)
+
+# Subset selection to find optimal model predictors
+
+library(leaps)
+library(MASS)
+
+regfit = regsubsets(armed~age+raceethnicity+comp_income+urate+cause+gender+college+pov,data=killings,nbest=1,nvmax=25, method="forward")
+
+regfit.sum = summary(regfit)
+regfit.sum
+
+n = dim(killings)[1]
+p = rowSums(regfit.sum$which) #number of predictors + intercept in the model 
+adjr2 = regfit.sum$adjr2
+cp = regfit.sum$cp
+rss = regfit.sum$rss
+AIC = n*log(rss/n) + 2*(p)
+BIC = n*log(rss/n) + (p)*log(n)
+
+c(AIC_min = which.min(AIC), BIC_min = which.min(BIC), adjr2_min = which.max(adjr2), cp_min = which.min(cp))
+coef(regfit, 3)
+
+# Trained log reg model based on 3 predictors from subset selection
+
+train = sample(1:nrow(killings),nrow(killings)/2, replace=FALSE)
+test = (-train)
+
+glm.fit = glm(armed~age+raceethnicity+cause, data=killings,subset=train,family='binomial')
+glm.prob = predict(glm.fit,killings[test,],type='response') 
+head(glm.prob)
+
+glm.pred = rep(0,length(test))
+glm.pred[glm.prob > .3885] = 1 
+table(glm.pred,killings[test,]$armed)
+1-mean(glm.pred == killings[test,]$armed)
+
+
+# Trained lda model based on 3 predictors from subset selection
+
+lda.fit = lda(armed~age+raceethnicity+cause,data=killings, subset=train)
+lda.pred = predict(lda.fit,killings[test,])
+table(lda.pred$class,killings[test,]$armed)
+
+
+library(e1071)
+library(rpart)
+library("rpart.plot")
+
+training_indexes = sample(1:nrow(killings), size = nrow(killings)/2)
+train = killings[training_indexes,]
+test = killings[training_indexes,]
+
+rpart.model <- rpart(armed ~ age+raceethnicity+cause, data = train)
+rpart.pred <- predict(rpart.model, test[,-21], type = "vector")
+rpart.plot(rpart.model)
